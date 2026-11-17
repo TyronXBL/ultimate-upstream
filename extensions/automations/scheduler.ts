@@ -223,7 +223,11 @@ export function scheduler(
       activeRuns.get(tx)!.add(a.id)
       a.runs.push({ id: String(id), firedAt, status: 'running' })
     }
-    a.runs = a.runs.slice(-RETAINED_RUNS)
+    while (a.runs.length > RETAINED_RUNS)
+      a.runs.splice(
+        a.runs.findIndex((r) => r.status !== 'running'),
+        1,
+      )
     return a.runs.at(-1)!
   }
   type PlanFromNow = { phase: 'plan' }

@@ -32,7 +32,7 @@ Each automation has one or both:
 
 - `prompt` starts a fresh run conversation per fire, labelled `automation`, titled with the name and local fire time; a
   nonempty FIRE text is appended as `\n\nFired: <text>`. Runs record status and the first answer line; the ledger keeps
-  the last 50 per automation.
+  the last 50 per automation, and a run that is still going until it ends.
 - `subscribers` wakes existing conversations with an `automations.fired` input `{id, name, text}`. A subscriber is
   `#12` or a standing agent's `@name`, resolved at delivery, so `@ultimate` follows it across chapters.
 

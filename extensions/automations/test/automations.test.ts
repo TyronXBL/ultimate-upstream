@@ -256,6 +256,24 @@ it('pause keeps a running profile run alive, skips overlap, and abort cancels a 
   await expect(f.action('update', { id: a.id, agent: 'missing' })).rejects.toThrow('Unknown agent')
 })
 
+it('keeps a run that is still going when 50 later fires skip, so its answer is recorded', async () => {
+  const f = await fixture()
+  await f.action('create', { name: 'Long', prompt: 'HOLD', schedule: 'every 10m', agent: 'writer' })
+  await vi.advanceTimersByTimeAsync(600_000)
+  await until(f.held)
+  const run = (await f.records())[0].runs[0]
+  for (let fires = 2; fires <= 51; fires++) {
+    await vi.advanceTimersByTimeAsync(600_000)
+    await until(async () => (await f.records())[0].fires === fires)
+  }
+  const runs = (await f.records())[0].runs
+  expect(runs).toHaveLength(50)
+  expect(runs[0]).toMatchObject({ id: run.id, status: 'running' })
+  f.release()
+  await until(async () => (await f.records())[0].runs[0].status === 'done')
+  expect((await f.records())[0].runs[0].answer).toBe('Answer: Released')
+})
+
 it('fires nothing while the host is paused and catches up once after Play', async () => {
   const f = await fixture()
   const a = (await f.action('create', {
