@@ -566,8 +566,14 @@ export async function saveOverlay(
   instructions: string,
 ) {
   if (!/^[a-zA-Z0-9_-]+$/.test(name)) throw new Error('name must be a nonempty identifier')
-  const path = join(scopeRoot(scope, roots.projectRoot, roots.userHome), `${name}.md`)
   const { ultimateRoot, projectRoot, userHome } = roots
+  const directory = scopeRoot(scope, projectRoot, userHome)
+  const current = (
+    await discoverAgents(ultimateRoot, projectRoot, userHome, modelRuntime)
+  ).definitions.find((definition) => definition.name === name)
+  const path =
+    current?.overlays?.findLast((file) => dirname(file) === directory) ??
+    join(directory, `${name}.md`)
   const { definitions } = await discoverAgents(
     ultimateRoot,
     projectRoot,

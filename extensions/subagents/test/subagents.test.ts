@@ -1941,6 +1941,54 @@ describe('subagents', () => {
     )
     expect(await readFile(overlay, 'utf8')).toBe(written)
   })
+  it('saves into the last overlay file a scope already has for the definition', async () => {
+    const { prepared, opened, userHome, ultimateRoot } = await fixture()
+    const ctx = {
+      host: { ...prepared, harness: () => opened.harness },
+    } as unknown as ActionContext
+    new ProjectTrustStore(join(userHome, '.ultimate')).set(prepared.projectRoot, true)
+    const project = join(prepared.projectRoot, '.ultimate/agents')
+    await mkdir(project, { recursive: true })
+    const save = (name: string, description: string, instructions: string, tools?: string[]) =>
+      actions.saveDefinition(
+        {
+          name,
+          scope: 'project',
+          frontmatter: {
+            description,
+            thinking: 'high',
+            resident: false,
+            ...(tools ? { tools } : {}),
+          },
+          instructions,
+        },
+        ctx,
+      )
+    const thinkingOf = async (name: string) =>
+      (
+        await discoverAgents(ultimateRoot, prepared.projectRoot, userHome, prepared.modelRuntime)
+      ).definitions.find((agent) => agent.name === name)?.thinking
+
+    const auditor = '---\nname: auditor\ndescription: Audits\n---\nAudit it.\n'
+    await writeFile(join(project, 'auditor.md'), auditor)
+    await writeFile(
+      join(project, 'auditor.team.md'),
+      '---\nname: auditor\naddTools: []\nthinking: low\n---\n',
+    )
+    await save('auditor', 'Audits', 'Audit it.')
+    expect(await thinkingOf('auditor')).toBe('high')
+    expect(await readFile(join(project, 'auditor.md'), 'utf8')).toBe(auditor)
+
+    const first = '---\nname: scout\naddTools: []\nthinking: low\n---\n'
+    await writeFile(join(project, 'scout.md'), first)
+    await writeFile(
+      join(project, 'scout.team.md'),
+      '---\nname: scout\naddTools: []\nthinking: medium\n---\n',
+    )
+    await save('scout', 'Search', 'Original instructions', ['read', 'bash'])
+    expect(await thinkingOf('scout')).toBe('high')
+    expect(await readFile(join(project, 'scout.md'), 'utf8')).toBe(first)
+  })
   it('keeps the tools an overlay adds to a base that inherits every tool when its form is saved', async () => {
     const { prepared, opened, userHome, ultimateRoot } = await fixture()
     const ctx = {
