@@ -170,9 +170,11 @@
   }
 }
 
-/* A section or group heading in the chrome (panels, sidebar sections, picker groups): quiet sentence-case mono. */
+/* A section or group heading in the chrome (panels, sidebar sections, picker groups): quiet sentence-case mono. Its
+   type is important because Tailwind sorts this many-property utility before single-property ones, so a component's
+   own text-sm or font-medium would win; its colour stays open to text-* and hover:. */
 @utility section-label {
-  @apply font-mono text-[11px] font-normal tracking-normal text-muted-foreground normal-case;
+  @apply font-mono! text-[11px]! leading-normal! font-normal! tracking-normal! text-muted-foreground normal-case!;
 }
 
 @layer base {
